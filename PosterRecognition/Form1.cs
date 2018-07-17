@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Newtonsoft.Json.Linq;
 using System.IO;
-using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http;
+using System.Web;
+using Newtonsoft.Json.Linq;
 
 namespace PosterRecognition
 {
@@ -25,24 +20,23 @@ namespace PosterRecognition
 
         const string uriBase =
             "https://westcentralus.api.cognitive.microsoft.com/vision/v2.0/ocr";
-        const string subscriptionKey = "2c421e4c61514be1b1b468d7461ef81f";
+        const string subscriptionKey = "b32a840e9c784d3d9f2a7375b92099bb";
 
-        private void button1_Click(object sender, EventArgs e)
+        private async void button1_Click(object sender, EventArgs e)
         {
-            //label1.Text = string.Empty;
-            //pictureBox1.Image = null;
+            label1.Text = string.Empty;
             pictureBox1.Refresh();
 
             try
             {
                 string imageFilePath = textBox1.Text;
-                pictureBox1.Load(textBox1.Text);
 
                 if (File.Exists(imageFilePath))
                 {
+                    pictureBox1.Load(imageFilePath);
                     // Make the REST API call.
                     label1.Text += "\nWait a moment for the results to appear.";
-                    MakeOCRRequest(imageFilePath).Wait();
+                    await MakeOCRRequest(imageFilePath);
                 }
                 else
                 {
@@ -51,7 +45,7 @@ namespace PosterRecognition
             }
             catch (Exception ex)
             {
-                if (ex is System.TypeInitializationException)
+                if (ex is TypeInitializationException)
                 {
                     MessageBox.Show("识别错误：" + ex.Message);
                 }
@@ -63,21 +57,25 @@ namespace PosterRecognition
             try
             {
                 HttpClient client = new HttpClient();
+                var queryString = HttpUtility.ParseQueryString(string.Empty);
 
                 // Request headers.
                 client.DefaultRequestHeaders.Add(
                     "Ocp-Apim-Subscription-Key", subscriptionKey);
 
                 // Request parameters.
-                string requestParameters = "language=unk&detectOrientation=true";
+                //queryString["mode"] = "Printed";
+                queryString["language"] = "unk";
+                queryString["detectOrientation"] = "true";
+                //var uri = "https://westus.api.cognitive.microsoft.com/vision/v2.0/recognizeText?" + queryString;
 
                 // Assemble the URI for the REST API Call.
-                string uri = uriBase + "?" + requestParameters;
+                string uri = uriBase + "?" + queryString;
 
                 HttpResponseMessage response;
 
                 // Request body. Posts a locally stored JPEG image.
-                byte[] byteData = GetImageAsByteArray(imageFilePath);
+                byte[] byteData = File.ReadAllBytes(imageFilePath);
 
                 using (ByteArrayContent content = new ByteArrayContent(byteData))
                 {
@@ -103,13 +101,16 @@ namespace PosterRecognition
             }
         }
 
-        private static byte[] GetImageAsByteArray(string imageFilePath)
+        private void Form1_Load(object sender, EventArgs e)
         {
-            using (FileStream fileStream =
-                new FileStream(imageFilePath, FileMode.Open, FileAccess.Read))
+            label1.Text = String.Empty;
+        }
+
+        private void textBox1_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar=='\r')
             {
-                BinaryReader binaryReader = new BinaryReader(fileStream);
-                return binaryReader.ReadBytes((int)fileStream.Length);
+                button1_Click(sender, e);
             }
         }
     }
