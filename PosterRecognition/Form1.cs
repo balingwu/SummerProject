@@ -19,6 +19,8 @@ namespace PosterRecognition
         public Form1()
         {
             InitializeComponent();
+            label1.Text = "Enter the path to the TextBox with text you wish to read: ";
+            pictureBox1.Image = null;
         }
 
         const string uriBase =
@@ -27,8 +29,8 @@ namespace PosterRecognition
 
         private void button1_Click(object sender, EventArgs e)
         {
-            label1.Text = string.Empty;
-            pictureBox1.Image = null;
+            //label1.Text = string.Empty;
+            //pictureBox1.Image = null;
             pictureBox1.Refresh();
 
             try
@@ -39,12 +41,12 @@ namespace PosterRecognition
                 if (File.Exists(imageFilePath))
                 {
                     // Make the REST API call.
-                    label1.Text = "Wait a moment for the results to appear.";
+                    label1.Text += "\nWait a moment for the results to appear.";
                     MakeOCRRequest(imageFilePath).Wait();
                 }
                 else
                 {
-                    label1.Text = "\nInvalid file path";
+                    label1.Text = "Invalid file path";
                 }
             }
             catch (Exception ex)
@@ -93,7 +95,7 @@ namespace PosterRecognition
                 string contentString = await response.Content.ReadAsStringAsync();
 
                 // Display the JSON response.
-                label1.Text = "\nResponse:\n\n{0}\n" + JToken.Parse(contentString).ToString();
+                label1.Text += "\nResponse:\n" + JToken.Parse(contentString).ToString();
             }
             catch (Exception e)
             {

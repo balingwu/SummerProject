@@ -39,14 +39,14 @@
             // 
             this.pictureBox1.Location = new System.Drawing.Point(1, -1);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(426, 450);
+            this.pictureBox1.Size = new System.Drawing.Size(388, 450);
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             // 
             // button1
             // 
             this.button1.Font = new System.Drawing.Font("微软雅黑", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.button1.Location = new System.Drawing.Point(560, 365);
+            this.button1.Location = new System.Drawing.Point(531, 332);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(118, 48);
             this.button1.TabIndex = 1;
@@ -56,15 +56,15 @@
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(462, 39);
+            this.textBox1.Location = new System.Drawing.Point(416, 25);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(304, 21);
+            this.textBox1.Size = new System.Drawing.Size(358, 21);
             this.textBox1.TabIndex = 2;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(473, 117);
+            this.label1.Location = new System.Drawing.Point(414, 71);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(41, 12);
             this.label1.TabIndex = 3;
