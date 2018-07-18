@@ -1,14 +1,14 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Microsoft.Azure.CognitiveServices.Language.TextAnalytics;
+using Microsoft.Azure.CognitiveServices.Language.TextAnalytics.Models;
+using Microsoft.Rest;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Threading.Tasks;
-using Microsoft.Azure.CognitiveServices.Language.TextAnalytics;
-using Microsoft.Azure.CognitiveServices.Language.TextAnalytics.Models;
-using System.Collections.Generic;
-using Microsoft.Rest;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace CSHttpClientSample
 {
@@ -30,7 +30,7 @@ namespace CSHttpClientSample
         static string poster = "";
         static string language = "";
 
-        static void Main()
+        static void Main(string[] args)
         {
             // Get the path and filename to process from the user.
             Console.WriteLine("Optical Character Recognition:");
@@ -48,20 +48,22 @@ namespace CSHttpClientSample
                 Console.WriteLine("\nInvalid file path");
             }
 
-            // Create a client.
-            ITextAnalyticsAPI client = new TextAnalyticsAPI(new ApiKeyServiceClientCredentials());
-            client.AzureRegion = AzureRegions.Westcentralus;
-
             Console.OutputEncoding = System.Text.Encoding.UTF8;
-            
-            // Getting key-phrases
             Console.WriteLine("\n===== Poster - Key ======\n");
 
-            KeyPhraseBatchResult result2 = client.KeyPhrasesAsync(new MultiLanguageBatchInput(
-                        new List<MultiLanguageInput>()
+            // Create a client.
+            ITextAnalyticsAPI client = new TextAnalyticsAPI(new ApiKeyServiceClientCredentials())
+            {
+                AzureRegion = AzureRegions.Westcentralus
+            };
+
+            // Getting key-phrases
+            KeyPhraseBatchResult result2 = client.KeyPhrasesAsync(input: new MultiLanguageBatchInput(
+                        documents: new List<MultiLanguageInput>()
                         {
-                          new MultiLanguageInput(language, "0", poster)
-                        })).Result;
+                            new MultiLanguageInput(language, "0", poster),
+                        })
+                ).Result;
             // Printing keyphrases
             foreach (var document in result2.Documents)
             {
@@ -119,8 +121,9 @@ namespace CSHttpClientSample
                 string contentString = await response.Content.ReadAsStringAsync();
 
                 // Display the JSON response.
+                JToken jToken = JToken.Parse(contentString);
                 Console.WriteLine("\nResponse:\n\n{0}\n",
-                    JToken.Parse(contentString).ToString());
+                    jToken.ToString());
 
                 // Find the text and the language.
                 string[] arraystring = contentString.Split(new string[] { "language\":\"", "\",\"orientation", "\"}", "text\":\"" }, StringSplitOptions.None);

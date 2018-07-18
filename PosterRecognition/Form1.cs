@@ -1,11 +1,15 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.IO;
-using System.Net.Http.Headers;
-using System.Net.Http;
-using System.Web;
+﻿using Microsoft.Azure.CognitiveServices.Language.TextAnalytics;
+using Microsoft.Azure.CognitiveServices.Language.TextAnalytics.Models;
+using Microsoft.Rest;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
+using System.Web;
+using System.Windows.Forms;
 
 namespace PosterRecognition
 {
@@ -14,17 +18,19 @@ namespace PosterRecognition
         public Form1()
         {
             InitializeComponent();
-            label1.Text = "Enter the path to the TextBox with text you wish to read: ";
+            textBox2.Text = "Enter the path to the TextBox with text you wish to read: ";
             pictureBox1.Image = null;
         }
 
         const string uriBase =
             "https://westcentralus.api.cognitive.microsoft.com/vision/v2.0/ocr";
         const string subscriptionKey = "b32a840e9c784d3d9f2a7375b92099bb";
+        string poster = "";
+        string language = "";
 
         private async void button1_Click(object sender, EventArgs e)
         {
-            label1.Text = string.Empty;
+            textBox2.Clear();
             pictureBox1.Refresh();
 
             try
@@ -35,20 +41,44 @@ namespace PosterRecognition
                 {
                     pictureBox1.Load(imageFilePath);
                     // Make the REST API call.
-                    label1.Text += "\nWait a moment for the results to appear.";
+                    textBox2.AppendText("\nWait a moment for the results to appear.");
                     await MakeOCRRequest(imageFilePath);
                 }
                 else
                 {
-                    label1.Text = "Invalid file path";
+                    textBox2.Text = "Invalid file path";
+                }
+
+                textBox2.AppendText("\n===== Poster - Key ======\n");
+
+                // Create a client.
+                ITextAnalyticsAPI client = new TextAnalyticsAPI(new ApiKeyServiceClientCredentials())
+                {
+                    AzureRegion = AzureRegions.Westcentralus
+                };
+
+                // Getting key-phrases
+                KeyPhraseBatchResult result2 = client.KeyPhrasesAsync(input: new MultiLanguageBatchInput(
+                            documents: new List<MultiLanguageInput>()
+                            {
+                            new MultiLanguageInput(language, "0", poster),
+                            })
+                    ).Result;
+                // Printing keyphrases
+                foreach (var document in result2.Documents)
+                {
+                    textBox2.AppendText(String.Format("\nDocument ID: {0} \n", document.Id));
+
+                    foreach (string keyphrase in document.KeyPhrases)
+                    {
+                        textBox2.AppendText("  " + keyphrase);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                if (ex is TypeInitializationException)
-                {
-                    MessageBox.Show("识别错误：" + ex.Message);
-                }
+                MessageBox.Show(this, "发生异常：" + ex, "错误", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                textBox2.Text = "上一次操作中发生了异常。";
             }
         }
 
@@ -57,7 +87,7 @@ namespace PosterRecognition
             try
             {
                 HttpClient client = new HttpClient();
-                var queryString = HttpUtility.ParseQueryString(string.Empty);
+                var queryString = HttpUtility.ParseQueryString(String.Empty);
 
                 // Request headers.
                 client.DefaultRequestHeaders.Add(
@@ -67,7 +97,6 @@ namespace PosterRecognition
                 //queryString["mode"] = "Printed";
                 queryString["language"] = "unk";
                 queryString["detectOrientation"] = "true";
-                //var uri = "https://westus.api.cognitive.microsoft.com/vision/v2.0/recognizeText?" + queryString;
 
                 // Assemble the URI for the REST API Call.
                 string uri = uriBase + "?" + queryString;
@@ -93,17 +122,31 @@ namespace PosterRecognition
                 string contentString = await response.Content.ReadAsStringAsync();
 
                 // Display the JSON response.
-                label1.Text += "\nResponse:\n" + JToken.Parse(contentString).ToString();
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show("\n" + e.Message);
-            }
-        }
+                JToken jToken = JToken.Parse(contentString);
+                textBox2.Clear();
+                textBox2.AppendText("Response:\n" + jToken.ToString());
+                textBox2.AppendText("\n");
 
-        private void Form1_Load(object sender, EventArgs e)
-        {
-            label1.Text = String.Empty;
+                // Find the text and the language.
+                string[] arraystring = contentString.Split(new string[] { "language\":\"", "\",\"orientation", "\"}", "text\":\"" }, StringSplitOptions.None);
+
+                for (int i = 0; i < arraystring.Length; i++)
+                {
+                    textBox2.AppendText("\n" + i + ": " + arraystring[i]);
+                }
+                language = arraystring[1];
+                for (int i = 3; i < arraystring.Length - 1; i += 2)
+                {
+                    poster += arraystring[i] + " ";
+                }
+
+                textBox2.AppendText("\nposter: " + poster + "\n");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "发生异常：" + ex, "错误", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                textBox2.Text = "上一次操作中出现了异常。";
+            }
         }
 
         private void textBox1_KeyPress(object sender, KeyPressEventArgs e)
@@ -111,6 +154,31 @@ namespace PosterRecognition
             if (e.KeyChar=='\r')
             {
                 button1_Click(sender, e);
+            }
+        }
+
+        private void openFileDialog1_FileOk(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (!e.Cancel)
+            {
+                textBox1.Text = openFileDialog1.FileName;
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            openFileDialog1.ShowDialog(this);
+        }
+
+        /// <summary>
+        /// Container for subscription credentials. Make sure to enter your valid key.
+        /// </summary>
+        class ApiKeyServiceClientCredentials : ServiceClientCredentials
+        {
+            public override Task ProcessHttpRequestAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
+            {
+                request.Headers.Add("Ocp-Apim-Subscription-Key", "516da86980ca4a5085bfdb41b0f5160e");
+                return base.ProcessHttpRequestAsync(request, cancellationToken);
             }
         }
     }
