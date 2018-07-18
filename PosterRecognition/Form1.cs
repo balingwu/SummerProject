@@ -135,9 +135,10 @@ namespace PosterRecognition
                     textBox2.AppendText("\n" + i + ": " + arraystring[i]);
                 }
                 language = arraystring[1];
+                string split = language.Contains("zh") ? String.Empty : " ";
                 for (int i = 3; i < arraystring.Length - 1; i += 2)
                 {
-                    poster += arraystring[i] + " ";
+                    poster += arraystring[i] + split;
                 }
 
                 textBox2.AppendText("\nposter: " + poster + "\n");
